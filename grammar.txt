@@ -1,0 +1,23 @@
+sequence ::=
+    pipeline
+    pipeline &
+    pipeline ;
+    pipeline & sequence
+    pipeline ; sequence
+
+pipeline ::=
+    command
+    command | pipeline
+
+command ::=
+    words redir
+
+words ::=
+    word
+    words word
+
+redir ::=
+    ^                       # empty
+    < word
+    > word
+    < word > word
