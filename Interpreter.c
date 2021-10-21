@@ -17,6 +17,9 @@ static Command i_command(T_command t) {
   Command command=0;
   if (t->words)
     command=newCommand(t->words);
+  Redir redir=0;
+  if (t->redir)
+    redir=newRedir(t->redir);
   return command;
 }
 

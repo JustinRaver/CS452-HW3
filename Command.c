@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <readline/history.h>
 #include "Command.h"
 #include "error.h"
 
@@ -41,17 +41,36 @@ BIDEFN(pwd) {
 BIDEFN(cd) {
   builtin_args(r,1);
   if (strcmp(r->argv[1],"-")==0) {
-    char *twd=cwd;
-    cwd=owd;
-    owd=twd;
+    if(owd){
+      char *twd=cwd;
+      cwd=owd;
+      owd=twd;
+    }
   } else {
     if (owd) free(owd);
+    if(!cwd) cwd = getcwd(0,0);
     owd=cwd;
     cwd=strdup(r->argv[1]);
   }
   if (cwd && chdir(cwd))
     ERROR("chdir() failed"); // warn
+  cwd = getcwd(0,0);
 }
+
+BIDEFN(history) {
+  builtin_args(r,0);
+
+  register HIST_ENTRY **hist_list;
+
+  hist_list = history_list();
+
+  if(hist_list){
+    for(int i=0; hist_list[i]; i++){
+      printf("%d %s\n", i+history_base, hist_list[i]->line);
+    }
+  }
+}
+
 
 static int builtin(BIARGS) {
   typedef struct {
@@ -62,6 +81,7 @@ static int builtin(BIARGS) {
     BIENTRY(exit),
     BIENTRY(pwd),
     BIENTRY(cd),
+    BIENTRY(history),
     {0,0}
   };
   int i;
@@ -93,11 +113,12 @@ static char **getargs(T_words words) {
   return argv;
 }
 
-extern Command newCommand(T_words words) {
+extern Command newCommand(T_words words, T_redir redir) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
     ERROR("malloc() failed");
   r->argv=getargs(words);
+  r->argv=getargs(redir);
   r->file=r->argv[0];
   return r;
 }

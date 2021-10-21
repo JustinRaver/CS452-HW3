@@ -8,4 +8,4 @@ valgrind $gen \
     --leak-check=full \
     --show-leak-kinds=all \
     --suppressions=rl.supp \
-    ./Shell
+    ./shell

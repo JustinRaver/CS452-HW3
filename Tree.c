@@ -10,6 +10,7 @@
   if (!v) ERROR("malloc() failed"); \
   return memset(v,0,sizeof(*v));
 
+extern T_redir    new_redir()    {ALLOC(T_redir)}
 extern T_sequence new_sequence() {ALLOC(T_sequence)}
 extern T_pipeline new_pipeline() {ALLOC(T_pipeline)}
 extern T_command  new_command()  {ALLOC(T_command)}

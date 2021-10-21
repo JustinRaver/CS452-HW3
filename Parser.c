@@ -22,6 +22,8 @@ static T_words p_words();
 static T_command p_command();
 static T_pipeline p_pipeline();
 static T_sequence p_sequence();
+static T_redir p_redir();
+
 
 static T_word p_word() {
   char *s=curr();
@@ -51,6 +53,9 @@ static T_command p_command() {
   if (!words)
     return 0;
   T_command command=new_command();
+  T_redir redir=p_redir();
+  
+  command->redir=redir;
   command->words=words;
   return command;
 }
@@ -77,10 +82,27 @@ static T_sequence p_sequence() {
     sequence->sequence=p_sequence();
   }
   if (eat(";")) {
-    sequence->op=";";
+    sequence->op=";cd ";
     sequence->sequence=p_sequence();
   }
   return sequence;
+}
+
+static T_redir p_redir(){
+  T_word word=p_word();
+  
+  if(!word) return 0;
+
+  T_redir redir=new_redir();
+  if(eat("<")){
+    redir->op="<";
+    redir->word=word;
+  }
+  if(eat(">")){
+    redir->op=">";
+    redir->word=word;
+  }
+  return redir;
 }
 
 extern Tree parseTree(char *s) {
@@ -97,6 +119,7 @@ static void f_words(T_words t);
 static void f_command(T_command t);
 static void f_pipeline(T_pipeline t);
 static void f_sequence(T_sequence t);
+static void f_redir(T_redir t);
 
 static void f_word(T_word t) {
   if (!t)
@@ -118,6 +141,7 @@ static void f_command(T_command t) {
   if (!t)
     return;
   f_words(t->words);
+  f_redir(t->redir);
   free(t);
 }
 
@@ -134,6 +158,13 @@ static void f_sequence(T_sequence t) {
     return;
   f_pipeline(t->pipeline);
   f_sequence(t->sequence);
+  free(t);
+}
+
+static void f_redir(T_redir t){
+  if (!t)
+    return;
+  f_word(t->word);
   free(t);
 }
 
