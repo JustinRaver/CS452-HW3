@@ -86,6 +86,11 @@ extern int cmpScanner(Scanner scan, char *s) {
 }
 
 extern int eatScanner(Scanner scan, char *s) {
+  // ScannerRep rep = (ScannerRep) scan;
+  // printf("str: %s \n", rep->str);
+  // printf("curr: %s \n", rep->curr);
+  // printf("pos: %s \n", rep->pos);
+
   int r=cmpScanner(scan,s);
   if (r)
     nextScanner(scan);

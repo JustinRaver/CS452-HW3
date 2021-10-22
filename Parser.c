@@ -27,6 +27,7 @@ static T_redir p_redir();
 
 static T_word p_word() {
   char *s=curr();
+
   if (!s)
     return 0;
   T_word word=new_word();
@@ -41,7 +42,7 @@ static T_words p_words() {
     return 0;
   T_words words=new_words();
   words->word=word;
-  if (cmp("|") || cmp("&") || cmp(";"))
+  if (cmp("|") || cmp("&") || cmp(";") || cmp("<") || cmp(">"))
     return words;
   words->words=p_words();
   return words;
@@ -54,7 +55,7 @@ static T_command p_command() {
     return 0;
   T_command command=new_command();
   T_redir redir=p_redir();
-  
+
   command->redir=redir;
   command->words=words;
   return command;
@@ -89,20 +90,21 @@ static T_sequence p_sequence() {
 }
 
 static T_redir p_redir(){
-  T_word word=p_word();
-  
-  if(!word) return 0;
-
+  printf("Doing redir \n");
   T_redir redir=new_redir();
+  // T_word word=new_word();
   if(eat("<")){
     redir->op="<";
-    redir->word=word;
+    redir->word=p_word();
+    return redir;
   }
   if(eat(">")){
     redir->op=">";
-    redir->word=word;
+    redir->word=p_word();
+    return redir;
   }
-  return redir;
+
+  return NULL;
 }
 
 extern Tree parseTree(char *s) {

@@ -16,7 +16,7 @@ $(prog): $(objs) ; g++ -o $@ $^ $(ldflags)
 
 .PHONY: clean run valgrind
 
-clean: ; rm -f $(prog) *.o *.d *.i vgcore* .history
+clean: ; rm -f $(prog) *.o *.d *.i vgcore*
 
 run:      $(prog) ; ./$< $(args)
 valgrind: $(prog) ; $@ --leak-check=full --show-leak-kinds=all ./$< $(args)

@@ -1,0 +1,9 @@
+pwd
+cd ..
+ls
+cd -
+ls
+pwd
+exit
+cd ./Test
+exit

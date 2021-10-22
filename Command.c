@@ -7,6 +7,8 @@
 #include "error.h"
 
 typedef struct {
+  int fd;
+  char *fileName;
   char *file;
   char **argv;
 } *CommandRep;
@@ -35,7 +37,18 @@ BIDEFN(pwd) {
   builtin_args(r,0);
   if (!cwd)
     cwd=getcwd(0,0);
-  printf("%s\n",cwd);
+  
+  printf("Made it past cwd\n");
+  printf("r->file %s\n", r->file);
+  
+  FILE* fp = NULL;
+  if(r->fileName != NULL) fp = fopen(r->fileName, "w");
+
+  fprintf(fp == NULL ? stdout : fp, "%s\n",cwd);
+
+  if(fp != NULL) fclose(fp);
+
+  printf("Closed file\n");
 }
 
 BIDEFN(cd) {
@@ -52,6 +65,7 @@ BIDEFN(cd) {
     owd=cwd;
     cwd=strdup(r->argv[1]);
   }
+  // printf("%s\n",cwd);
   if (cwd && chdir(cwd))
     ERROR("chdir() failed"); // warn
   cwd = getcwd(0,0);
@@ -63,12 +77,16 @@ BIDEFN(history) {
   register HIST_ENTRY **hist_list;
 
   hist_list = history_list();
-
+  
+  FILE* fp = NULL;
+  if(r->fileName != NULL) fp = fopen(r->fileName, "w");
+  
   if(hist_list){
     for(int i=0; hist_list[i]; i++){
-      printf("%d %s\n", i+history_base, hist_list[i]->line);
+      fprintf(fp == NULL ? stdout:fp, "%d %s\n", i+history_base, hist_list[i]->line);
     }
   }
+  if(fp != NULL) fclose(fp);
 }
 
 
@@ -117,9 +135,21 @@ extern Command newCommand(T_words words, T_redir redir) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
     ERROR("malloc() failed");
+
   r->argv=getargs(words);
-  r->argv=getargs(redir);
   r->file=r->argv[0];
+  r->fd=1;
+  r->fileName=NULL;
+
+  if (redir != NULL){
+    if(strchr(redir->op, '>') != NULL){
+      r->fileName = redir->word->s;
+      printf("redir op >\n");
+    }else if (strchr(redir->op, '<') != NULL){
+      r->fd=0;
+      printf("redir op <\n");
+    }
+  }
   return r;
 }
 
@@ -143,6 +173,7 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     addJobs(jobs,pipeline);
   }
   int pid=fork();
+  printf("forking into child\n");
   if (pid==-1)
     ERROR("fork() failed");
   if (pid==0)
