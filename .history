@@ -1,0 +1,6 @@
+cat < grammar.txt
+ls
+exit
+exit
+pwd ; cd - & pwd
+pwd & history > file.txt & cd - & exit

@@ -5,6 +5,7 @@
 #include <readline/history.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include<sys/wait.h>
 #include <fcntl.h>
 #include "Command.h"
 #include "error.h"
@@ -12,7 +13,6 @@
 typedef struct {
   int input;
   int output;
-  char *fileName1;
   char *file;
   char **argv;
 } *CommandRep;
@@ -34,6 +34,7 @@ static void builtin_args(CommandRep r, int n) {
 
 BIDEFN(exit) {
   builtin_args(r,0);
+  wait(NULL);
   *eof=1;
 }
 
@@ -42,12 +43,8 @@ BIDEFN(pwd) {
   if (!cwd)
     cwd=getcwd(0,0);
   
-  FILE* fp = NULL;
-  if(r->fileName1 != NULL) fp = fopen(r->fileName1, "w");
-
-  fprintf(fp == NULL ? stdout : fp, "%s\n",cwd);
-
-  if(fp != NULL) fclose(fp);
+  dprintf(r->output, "%s\n",cwd);
+  if(r->output != 1) close(r->output);
 }
 
 BIDEFN(cd) {
@@ -77,16 +74,13 @@ BIDEFN(history) {
 
   hist_list = history_list();
   
-  FILE* fp = NULL;
-  if(r->fileName1 != NULL) fp = fopen(r->fileName1, "w");
-  
   if(hist_list){
     for(int i=0; hist_list[i]; i++){
-      fprintf(fp != NULL ? fp:stdout, "%d %s\n", i+history_base, hist_list[i]->line);
+      dprintf(r->output, "%d %s\n", i+history_base, hist_list[i]->line);
     }
   }
 
-  if(fp != NULL) fclose(fp);
+  if(r->output != 1) close(r->output);
 }
 
 
@@ -131,16 +125,15 @@ static char **getargs(T_words words) {
   return argv;
 }
 
-extern Command newCommand(T_words words, T_redir redir) {
+extern Command newCommand(T_words words, T_redir redir, int input, int output) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
     ERROR("malloc() failed");
 
   r->argv=getargs(words);
   r->file=r->argv[0];
-  r->input=0;
-  r->output=1;
-  r->fileName1=NULL;
+  r->input=input;
+  r->output=output;
 
   if (redir != NULL){
     if (strchr(redir->op1, '<') != NULL){
@@ -150,8 +143,7 @@ extern Command newCommand(T_words words, T_redir redir) {
         r->output= open(redir->word2->s, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
       }
     }else{
-      r->fileName1 = redir->word1->s;
-      r->output= open(r->fileName1, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      r->output= open(redir->word1->s, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     }
 
     if(r->output < 0 || r->input < 0){
@@ -176,10 +168,11 @@ static void child(CommandRep r, int fg) {
     dup2(r->input, STDIN_FILENO);
     close(r->input);
   }
+  printf("Changed descriptors\n");
 
+  printf("Made it before execvp\n");
   execvp(r->argv[0],r->argv);
-
-
+  
   ERROR("execvp() failed");
   exit(0);
 }
@@ -187,6 +180,8 @@ static void child(CommandRep r, int fg) {
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
 			int *jobbed, int *eof, int fg) {
   CommandRep r=command;
+
+  // printf("FG: %d\n", fg);
   if (fg && builtin(r,eof,jobs))
     return;
   if (!*jobbed) {
@@ -194,13 +189,18 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     addJobs(jobs,pipeline);
   }
 
-
   int pid=fork();
-  printf("forking into child\n");
   if (pid==-1)
     ERROR("fork() failed");
-  if (pid==0)
+  if (pid==0){
+    printf("Went into a child funct\n");
     child(r,fg);
+    printf("Returned from child\n");
+  }
+  // else{
+  //   wait(NULL);
+  //   printf("Child pid: %d\n", pid);
+  // }
 }
 
 extern void freeCommand(Command command) {

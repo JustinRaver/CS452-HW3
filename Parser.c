@@ -67,6 +67,7 @@ static T_pipeline p_pipeline() {
     return 0;
   T_pipeline pipeline=new_pipeline();
   pipeline->command=command;
+  pipeline->pipeline = NULL;
   if (eat("|"))
     pipeline->pipeline=p_pipeline();
   return pipeline;
@@ -77,6 +78,7 @@ static T_sequence p_sequence() {
   if (!pipeline)
     return 0;
   T_sequence sequence=new_sequence();
+  sequence->op = NULL;
   sequence->pipeline=pipeline;
   if (eat("&")) {
     sequence->op="&";

@@ -7,7 +7,7 @@ typedef void *Command;
 #include "Jobs.h"
 #include "Sequence.h"
 
-extern Command newCommand(T_words words, T_redir redir);
+extern Command newCommand(T_words words, T_redir redir, int input, int output);
 
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
 			int *jobbed, int *eof, int fg);
