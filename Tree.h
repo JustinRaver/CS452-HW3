@@ -9,8 +9,10 @@ typedef struct T_words    *T_words;
 typedef struct T_word     *T_word;
 
 struct T_redir {
-  char *op;			/* < or > */
-  T_word word;
+  char *op1;			/* < or > */
+  char *op2;
+  T_word word1;
+  T_word word2;
 };
 struct T_sequence {
   T_pipeline pipeline;

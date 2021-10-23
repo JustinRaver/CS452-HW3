@@ -3,12 +3,17 @@
 #include <unistd.h>
 #include <string.h>
 #include <readline/history.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "Command.h"
 #include "error.h"
 
 typedef struct {
-  int fd;
-  char *fileName;
+  int input;
+  int output;
+  char *fileName1;
+  char *fileName2;
   char *file;
   char **argv;
 } *CommandRep;
@@ -42,7 +47,7 @@ BIDEFN(pwd) {
   printf("r->file %s\n", r->file);
   
   FILE* fp = NULL;
-  if(r->fileName != NULL) fp = fopen(r->fileName, "w");
+  if(r->fileName1 != NULL) fp = fopen(r->fileName1, "w");
 
   fprintf(fp == NULL ? stdout : fp, "%s\n",cwd);
 
@@ -79,7 +84,7 @@ BIDEFN(history) {
   hist_list = history_list();
   
   FILE* fp = NULL;
-  if(r->fileName != NULL) fp = fopen(r->fileName, "w");
+  if(r->fileName1 != NULL) fp = fopen(r->fileName1, "w");
   
   if(hist_list){
     for(int i=0; hist_list[i]; i++){
@@ -138,16 +143,23 @@ extern Command newCommand(T_words words, T_redir redir) {
 
   r->argv=getargs(words);
   r->file=r->argv[0];
-  r->fd=1;
-  r->fileName=NULL;
+  r->input=0;
+  r->output=1;
+  r->fileName1=NULL;
 
   if (redir != NULL){
-    if(strchr(redir->op, '>') != NULL){
-      r->fileName = redir->word->s;
-      printf("redir op >\n");
-    }else if (strchr(redir->op, '<') != NULL){
-      r->fd=0;
-      printf("redir op <\n");
+    if (strchr(redir->op1, '<') != NULL){
+      r->fileName1 = redir->word1->s;
+      r->input = open(r->fileName1, O_RDONLY);
+
+      if(redir->op2 != NULL){
+        r->fileName2 = redir->word2->s;
+
+        r->output= open(r->fileName2, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      }
+    }else if(strchr(redir->op1, '>') != NULL){
+      r->output= open(r->fileName1, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      r->fileName1 = redir->word1->s;
     }
   }
   return r;
@@ -158,7 +170,19 @@ static void child(CommandRep r, int fg) {
   Jobs jobs=newJobs();
   if (builtin(r,&eof,jobs))
     return;
+ 
+  if(r->output != 1){
+    dup2(r->output,1);
+    close(r->output);
+  } 
+  if(r->input != 0){
+    dup2(r->input, 0);
+    close(r->input);
+  }
+
   execvp(r->argv[0],r->argv);
+
+
   ERROR("execvp() failed");
   exit(0);
 }
@@ -172,6 +196,8 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     *jobbed=1;
     addJobs(jobs,pipeline);
   }
+
+
   int pid=fork();
   printf("forking into child\n");
   if (pid==-1)
