@@ -90,9 +90,10 @@ static T_sequence p_sequence() {
 }
 
 static T_redir p_redir(){
-  printf("Doing redir \n");
   T_redir redir=new_redir();
-
+  redir->op1 = NULL;
+  redir->op2 = NULL;
+  redir->word2=NULL;
   int ate = 0;
 
   if(eat("<")){
@@ -106,22 +107,12 @@ static T_redir p_redir(){
       redir->word2=p_word();
       ate = 0;
     }else{
-      printf("Made it here!\n");
       redir->op1= ">";
       redir->word1=p_word();
     }
   }
-  printf("Made it past conditionals\n");
-  if(strchr(redir->op1, '<') != NULL || strchr(redir->op1, '>') != NULL){
-    if(ate){
-      redir->op2 = NULL;
-      redir->word2=NULL;
-    } 
-    printf("Returning something\n");
-    return redir;
-  }
 
-  return NULL;
+  return redir->op1 == NULL ? NULL : redir;
 }
 
 extern Tree parseTree(char *s) {

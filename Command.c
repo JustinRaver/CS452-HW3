@@ -13,7 +13,6 @@ typedef struct {
   int input;
   int output;
   char *fileName1;
-  char *fileName2;
   char *file;
   char **argv;
 } *CommandRep;
@@ -43,17 +42,12 @@ BIDEFN(pwd) {
   if (!cwd)
     cwd=getcwd(0,0);
   
-  printf("Made it past cwd\n");
-  printf("r->file %s\n", r->file);
-  
   FILE* fp = NULL;
   if(r->fileName1 != NULL) fp = fopen(r->fileName1, "w");
 
   fprintf(fp == NULL ? stdout : fp, "%s\n",cwd);
 
   if(fp != NULL) fclose(fp);
-
-  printf("Closed file\n");
 }
 
 BIDEFN(cd) {
@@ -88,9 +82,10 @@ BIDEFN(history) {
   
   if(hist_list){
     for(int i=0; hist_list[i]; i++){
-      fprintf(fp == NULL ? stdout:fp, "%d %s\n", i+history_base, hist_list[i]->line);
+      fprintf(fp != NULL ? fp:stdout, "%d %s\n", i+history_base, hist_list[i]->line);
     }
   }
+
   if(fp != NULL) fclose(fp);
 }
 
@@ -149,17 +144,19 @@ extern Command newCommand(T_words words, T_redir redir) {
 
   if (redir != NULL){
     if (strchr(redir->op1, '<') != NULL){
-      r->fileName1 = redir->word1->s;
-      r->input = open(r->fileName1, O_RDONLY);
+      r->input = open(redir->word1->s, O_RDONLY);
 
       if(redir->op2 != NULL){
-        r->fileName2 = redir->word2->s;
-
-        r->output= open(r->fileName2, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        r->output= open(redir->word2->s, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
       }
-    }else if(strchr(redir->op1, '>') != NULL){
-      r->output= open(r->fileName1, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    }else{
       r->fileName1 = redir->word1->s;
+      r->output= open(r->fileName1, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    }
+
+    if(r->output < 0 || r->input < 0){
+        perror("Failed to open file");
+        exit(-222);
     }
   }
   return r;
@@ -172,11 +169,11 @@ static void child(CommandRep r, int fg) {
     return;
  
   if(r->output != 1){
-    dup2(r->output,1);
+    dup2(r->output, STDOUT_FILENO);
     close(r->output);
   } 
   if(r->input != 0){
-    dup2(r->input, 0);
+    dup2(r->input, STDIN_FILENO);
     close(r->input);
   }
 
