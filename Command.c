@@ -172,7 +172,7 @@ static void child(CommandRep r, int fg) {
 
   
 
-  execvp(r->argv[0],r->argv);
+  if(execvp(r->argv[0],r->argv) < 0) perror("Exec failed");
 
   ERROR("execvp() failed");
   exit(0);
@@ -198,7 +198,6 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
   }else{
     closeFD(r);
     if(fg == 1){
-      printf("Waiting\n");
       wait(NULL);
     }
   }

@@ -34,21 +34,17 @@ extern int sizePipeline(Pipeline pipeline) {
 
 static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
   PipelineRep r=(PipelineRep)pipeline;
-  int size = sizePipeline(r);
-  // printf("Size of pipeline %d\n", size);
-  for (int i=0; i<size && !*eof; i++){
+  
+  for (int i=0; i<sizePipeline(r) && !*eof; i++){
     execCommand(deq_head_ith(r->processes,i),pipeline,jobs,jobbed,eof,r->fg);
   }
 
   if(r->fg == -1){
     pid_t wpid;
     int status;
-    // printf("Parent is waiting\n");
     while ((wpid = wait(&status)) > 0);
 
-    printf("wpid: %d, exit status: %d\n", wpid, status);
-    // while(wait(NULL) > 0);
-    // printf("Parent no longer waiting\n");
+    // printf("wpid: %d, exit status: %d\n", wpid, status);
   }
 }
 
