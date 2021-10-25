@@ -94,24 +94,19 @@ static T_sequence p_sequence() {
 static T_redir p_redir(){
   T_redir redir=new_redir();
   redir->op1 = NULL;
-  redir->op2 = NULL;
   redir->word2=NULL;
-  int ate = 0;
 
   if(eat("<")){
     redir->op1="<";
     redir->word1=p_word();
-    ate = 1;
+    
+    if(eat(">")){
+      redir->word2=p_word();
+    }
   }
   if(eat(">")){
-    if(ate){
-      redir->op2 = ">";
-      redir->word2=p_word();
-      ate = 0;
-    }else{
       redir->op1= ">";
       redir->word1=p_word();
-    }
   }
 
   return redir->op1 == NULL ? NULL : redir;

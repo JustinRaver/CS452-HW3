@@ -4,3 +4,25 @@ exit
 exit
 pwd ; cd - & pwd
 pwd & history > file.txt & cd - & exit
+pwd | exit
+pwd & 
+pwd : exit &
+pwd ; exit &
+exit
+cat grammar.txt > newPurple.txt & cd .. ; pwd & ls
+ls
+cd -
+ls
+sleep 10 ; exit
+pwd | cat | cat | cat > cat.txt
+sleep 5
+sleep 5 ; exit
+sleep 10 & pwd
+cat grammar.txt | cat | cat | cat
+exit
+sleep 10 & exit
+sleep 10
+sleep 10 & exit
+sleep 10 & exit
+sleep 10 ; exit
+sleep 10 & exit

@@ -1,3 +1,4 @@
+#include <sys/wait.h>
 #include "Sequence.h"
 #include "deq.h"
 #include "error.h"
@@ -17,5 +18,10 @@ extern void freeSequence(Sequence sequence) {
 extern void execSequence(Sequence sequence, Jobs jobs, int *eof) {
   while (deq_len(sequence) && !*eof)
     execPipeline(deq_head_get(sequence),jobs,eof);
+
+  // printf("Parent is waiting\n");
+  // while(wait(NULL) > 0);
+  // printf("Parent no longer waiting\n");
+
   freeSequence(sequence);
 }

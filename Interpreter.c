@@ -27,7 +27,7 @@ static void i_pipeline(T_pipeline t, Pipeline pipeline, int input) {
   
   if(t->pipeline != NULL){ 
     int fd[2];
-    pipe(fd);
+    if(pipe(fd) < 0) perror("Failed to open pipe");
 
     // first command in pipe and no pipe before
     addPipeline(pipeline,i_command(t->command, input, fd[1]));
@@ -42,7 +42,8 @@ static void i_sequence(T_sequence t, Sequence sequence) {
   if (!t)
     return;
   
-  Pipeline pipeline=newPipeline((t->op != NULL && strchr(t->op, '&') != NULL) || (t->pipeline->pipeline != NULL) ? 0 : 1);
+  // -1 for pipeline, 0 for &, 1 otherwise
+  Pipeline pipeline=newPipeline((t->pipeline->pipeline != NULL) ? -1 : !(t->op != NULL && strchr(t->op, '&') != NULL));
   i_pipeline(t->pipeline,pipeline, STDIN_FILENO);
   addSequence(sequence,pipeline);
   i_sequence(t->sequence,sequence);

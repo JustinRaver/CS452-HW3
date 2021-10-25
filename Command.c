@@ -34,7 +34,7 @@ static void builtin_args(CommandRep r, int n) {
 
 BIDEFN(exit) {
   builtin_args(r,0);
-  wait(NULL);
+  while ((wait(NULL)) > 0);
   *eof=1;
 }
 
@@ -44,7 +44,7 @@ BIDEFN(pwd) {
     cwd=getcwd(0,0);
   
   dprintf(r->output, "%s\n",cwd);
-  if(r->output != 1) close(r->output);
+  // if(r->output != 1) close(r->output);
 }
 
 BIDEFN(cd) {
@@ -80,7 +80,7 @@ BIDEFN(history) {
     }
   }
 
-  if(r->output != 1) close(r->output);
+  // if(r->output != 1) close(r->output);
 }
 
 
@@ -139,15 +139,15 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
     if (strchr(redir->op1, '<') != NULL){
       r->input = open(redir->word1->s, O_RDONLY);
 
-      if(redir->op2 != NULL){
-        r->output= open(redir->word2->s, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      if(redir->word2 != NULL){
+        r->output= open(redir->word2->s, O_RDWR | O_CREAT | O_TRUNC, 0777);
       }
     }else{
-      r->output= open(redir->word1->s, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      r->output= open(redir->word1->s, O_RDWR | O_CREAT | O_TRUNC, 0777);
     }
 
     if(r->output < 0 || r->input < 0){
-        perror("Failed to open file");
+        ERROR("Failed to open file");
         exit(-222);
     }
   }
@@ -157,22 +157,23 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
 static void child(CommandRep r, int fg) {
   int eof=0;
   Jobs jobs=newJobs();
+  // printf("Command %s\n", r->argv[0]);
   if (builtin(r,&eof,jobs))
     return;
  
-  if(r->output != 1){
-    dup2(r->output, STDOUT_FILENO);
-    close(r->output);
+  if(r->output != STDOUT_FILENO){
+    if(dup2(r->output, STDOUT_FILENO) < 0) perror("Dup2 failed to execute");
+    if(close(r->output) < 0) perror("Failed to close file descriptor");
   } 
-  if(r->input != 0){
-    dup2(r->input, STDIN_FILENO);
-    close(r->input);
+  if(r->input != STDIN_FILENO){
+    if(dup2(r->input, STDIN_FILENO) < 0) perror("Dup2 failed to execute");
+    if(close(r->input)< 0) perror("Failed to close file descriptor"); 
   }
-  printf("Changed descriptors\n");
 
-  printf("Made it before execvp\n");
-  execvp(r->argv[0],r->argv);
   
+
+  execvp(r->argv[0],r->argv);
+
   ERROR("execvp() failed");
   exit(0);
 }
@@ -181,8 +182,7 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
 			int *jobbed, int *eof, int fg) {
   CommandRep r=command;
 
-  // printf("FG: %d\n", fg);
-  if (fg && builtin(r,eof,jobs))
+  if ((fg == 1) && builtin(r,eof,jobs))
     return;
   if (!*jobbed) {
     *jobbed=1;
@@ -193,14 +193,26 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
   if (pid==-1)
     ERROR("fork() failed");
   if (pid==0){
-    printf("Went into a child funct\n");
     child(r,fg);
-    printf("Returned from child\n");
+    exit(0);
+  }else{
+    closeFD(r);
+    if(fg == 1){
+      printf("Waiting\n");
+      wait(NULL);
+    }
   }
-  // else{
-  //   wait(NULL);
-  //   printf("Child pid: %d\n", pid);
-  // }
+}
+
+extern void closeFD(Command command){
+  CommandRep r=command;
+
+  if(r->input != STDIN_FILENO){
+    if(close(r->input) < 0) perror("Failed to close pipe");
+  }
+  if(r->output != STDOUT_FILENO){
+    if(close(r->output) < 0) perror("Failed to close pipe");
+  }
 }
 
 extern void freeCommand(Command command) {

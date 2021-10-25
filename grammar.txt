@@ -1,13 +1,13 @@
 sequence ::=
     pipeline
-    pipeline &
+    pipeline & # execute pipeline parent continues to prompt
     pipeline ;
-    pipeline & sequence
-    pipeline ; sequence
+    pipeline & sequence # execute pipeline parent continues
+    pipeline ; sequence # default execute in order waiting for each
 
 pipeline ::=
     command
-    command | pipeline
+    command | pipeline # execute both and once executing wait for finish
 
 command ::=
     words redir
