@@ -51,7 +51,7 @@ static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
 extern void execPipeline(Pipeline pipeline, Jobs jobs, int *eof) {
   int jobbed=0;
   execute(pipeline,jobs,&jobbed,eof);
-  if (!jobbed)
+  if (!jobbed) // why only free the built ins?
     freePipeline(pipeline);	// for fg builtins, and such
 }
 

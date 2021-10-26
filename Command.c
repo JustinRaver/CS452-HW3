@@ -135,7 +135,7 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
   r->input=input;
   r->output=output;
 
-  if (redir != NULL){
+  if (redir->op1 != NULL){
     if (strchr(redir->op1, '<') != NULL){
       r->input = open(redir->word1->s, O_RDONLY);
 
@@ -148,6 +148,7 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
 
     if(r->output < 0 || r->input < 0){
         ERROR("Failed to open file");
+        freeCommand(r);
         exit(-222);
     }
   }

@@ -108,8 +108,7 @@ static T_redir p_redir(){
       redir->op1= ">";
       redir->word1=p_word();
   }
-
-  return redir->op1 == NULL ? NULL : redir;
+  return redir;
 }
 
 extern Tree parseTree(char *s) {
