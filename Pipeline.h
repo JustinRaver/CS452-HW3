@@ -7,14 +7,9 @@ typedef void *Pipeline;
 #include "Command.h"
 #include "Jobs.h"
 
-typedef struct {
-  Deq processes;
-  Deq pids;
-  int fg;			// not "&"
-} *PipelineRep;
-
 extern Pipeline newPipeline(int fg);
 extern void addPipeline(Pipeline pipeline, Command command);
+extern Deq getPIDS(Pipeline pipeline);
 extern void addPipePID(Pipeline pipeline, long process);
 extern int sizePipePIDS(Pipeline pipeline);
 extern Data getPipePID(Pipeline pipeline);

@@ -28,7 +28,6 @@ extern void manageJobs(Jobs jobs){
   for(int i=sizeJobs(jobs)-1 ; i>=0 ; i--){
     // each pipeline job in jobs
     Pipeline pipeline = deq_head_ith(jobs,i);
-    PipelineRep r = pipeline;
 
     int sizePIDS = sizePipePIDS(pipeline);
     if(sizePIDS == 0){
@@ -40,10 +39,10 @@ extern void manageJobs(Jobs jobs){
      */
     for(int j=sizePIDS-1;j>=0;j--){
       // get the ith PID
-      pid_t pid = (long)deq_head_ith(r->pids,j);
+      pid_t pid = (long)deq_head_ith(getPIDS(pipeline),j);
       if(waitpid(pid, NULL, WNOHANG) > 0){
         printf("[%d] done\n",pid);
-        deq_head_rem(r->pids,deq_head_ith(r->pids,j));
+        deq_head_rem(getPIDS(pipeline),deq_head_ith(getPIDS(pipeline),j));
       } 
     }
   }

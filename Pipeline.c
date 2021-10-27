@@ -7,6 +7,12 @@
 #include "Pipeline.h"
 #include "error.h"
 
+typedef struct {
+  Deq processes;
+  Deq pids;
+  int fg;			// not "&"
+} *PipelineRep;
+
 extern Pipeline newPipeline(int fg) {
   PipelineRep r=(PipelineRep)malloc(sizeof(*r));
   if (!r)
@@ -15,6 +21,11 @@ extern Pipeline newPipeline(int fg) {
   r->pids=deq_new();
   r->fg=fg;
   return r;
+}
+
+extern Deq getPIDS(Pipeline pipeline){
+  PipelineRep r=pipeline;
+  return r->pids;
 }
 
 extern void addPipePID(Pipeline pipeline, long pid){
