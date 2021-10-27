@@ -35,6 +35,8 @@ static void builtin_args(CommandRep r, int n) {
 BIDEFN(exit) {
   builtin_args(r,0);
   while ((wait(NULL)) > 0);
+  manageJobs(jobs);
+  freeJobs(jobs);
   *eof=1;
 }
 
@@ -42,9 +44,7 @@ BIDEFN(pwd) {
   builtin_args(r,0);
   if (!cwd)
     cwd=getcwd(0,0);
-  
   dprintf(r->output, "%s\n",cwd);
-  // if(r->output != 1) close(r->output);
 }
 
 BIDEFN(cd) {
@@ -61,7 +61,6 @@ BIDEFN(cd) {
     owd=cwd;
     cwd=strdup(r->argv[1]);
   }
-  // printf("%s\n",cwd);
   if (cwd && chdir(cwd))
     ERROR("chdir() failed"); // warn
   cwd = getcwd(0,0);
@@ -79,8 +78,6 @@ BIDEFN(history) {
       dprintf(r->output, "%d %s\n", i+history_base, hist_list[i]->line);
     }
   }
-
-  // if(r->output != 1) close(r->output);
 }
 
 
@@ -100,6 +97,9 @@ static int builtin(BIARGS) {
   for (i=0; builtins[i].s; i++)
     if (!strcmp(r->file,builtins[i].s)) {
       builtins[i].f(r,eof,jobs);
+      // close the file descriptors if they were opened
+      if(r->input != STDIN_FILENO) close(r->input);
+      if(r->output != STDOUT_FILENO) close(r->output);
       return 1;
     }
   return 0;
@@ -185,7 +185,7 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
 
   if ((fg == 1) && builtin(r,eof,jobs))
     return;
-  if (!*jobbed) {
+  if (!*jobbed) { // 0 or 1
     *jobbed=1;
     addJobs(jobs,pipeline);
   }
@@ -197,9 +197,15 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
     child(r,fg);
     exit(0);
   }else{
+    // close the file descriptors 
     closeFD(r);
+    // get the pid of the child process and add it to the jobs for the pipeline
+    addPipePID(pipeline,pid);
+
+    // if the command isnt a foreground command then wait for it to execute
     if(fg == 1){
-      wait(NULL);
+      pid_t process = (long)getPipePID(pipeline);
+      waitpid(process, NULL, 0);
     }
   }
 }

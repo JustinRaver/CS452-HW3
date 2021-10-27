@@ -9,5 +9,6 @@ extern Jobs newJobs();
 extern void addJobs(Jobs jobs, Pipeline pipeline);
 extern int sizeJobs(Jobs jobs);
 extern void freeJobs(Jobs jobs);
+extern void manageJobs(Jobs jobs);
 
 #endif

@@ -5,21 +5,33 @@
 #include <sys/wait.h>
 
 #include "Pipeline.h"
-#include "deq.h"
 #include "error.h"
-
-typedef struct {
-  Deq processes;
-  int fg;			// not "&"
-} *PipelineRep;
 
 extern Pipeline newPipeline(int fg) {
   PipelineRep r=(PipelineRep)malloc(sizeof(*r));
   if (!r)
     ERROR("malloc() failed");
   r->processes=deq_new();
+  r->pids=deq_new();
   r->fg=fg;
   return r;
+}
+
+extern void addPipePID(Pipeline pipeline, long pid){
+  PipelineRep r = pipeline;
+  // add a process id to the process
+  deq_head_put(r->pids, (Data)pid);
+}
+
+extern Data getPipePID(Pipeline pipeline){
+  PipelineRep r = pipeline;
+
+  return deq_head_get(r->pids);
+}
+
+extern int sizePipePIDS(Pipeline pipeline){
+  PipelineRep r = pipeline;
+  return deq_len(r->pids);
 }
 
 extern void addPipeline(Pipeline pipeline, Command command) {
@@ -34,25 +46,28 @@ extern int sizePipeline(Pipeline pipeline) {
 
 static void execute(Pipeline pipeline, Jobs jobs, int *jobbed, int *eof) {
   PipelineRep r=(PipelineRep)pipeline;
-  
+
   for (int i=0; i<sizePipeline(r) && !*eof; i++){
     execCommand(deq_head_ith(r->processes,i),pipeline,jobs,jobbed,eof,r->fg);
   }
 
-  if(r->fg == -1){
-    pid_t wpid;
-    int status;
-    while ((wpid = wait(&status)) > 0);
-
-    // printf("wpid: %d, exit status: %d\n", wpid, status);
+  if((sizePipeline(r) > 1) && !(r->fg)){
+    while(sizePipePIDS(pipeline) > 0){
+      pid_t pid = (long) getPipePID(pipeline);
+      waitpid(pid, NULL, 0);
+    }
   }
 }
 
 extern void execPipeline(Pipeline pipeline, Jobs jobs, int *eof) {
   int jobbed=0;
   execute(pipeline,jobs,&jobbed,eof);
-  if (!jobbed) // why only free the built ins?
+
+  if (!jobbed || (sizePipePIDS(pipeline) == 0)){ // frees the pipeline if all processes have exited
+    // remove and free job from jobs
+    deq_head_rem(jobs,pipeline);
     freePipeline(pipeline);	// for fg builtins, and such
+  }
 }
 
 extern void freePipeline(Pipeline pipeline) {

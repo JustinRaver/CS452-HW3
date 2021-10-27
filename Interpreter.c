@@ -42,8 +42,8 @@ static void i_sequence(T_sequence t, Sequence sequence) {
   if (!t)
     return;
   
-  // -1 for pipeline, 0 for &, 1 otherwise
-  Pipeline pipeline=newPipeline((t->pipeline->pipeline != NULL) ? -1 : !(t->op != NULL && strchr(t->op, '&') != NULL));
+  // 0 for & or pipeline, 1 otherwise
+  Pipeline pipeline=newPipeline(!(t->pipeline->pipeline != NULL) && !(t->op != NULL && strchr(t->op, '&') != NULL));
   i_pipeline(t->pipeline,pipeline, STDIN_FILENO);
   addSequence(sequence,pipeline);
   i_sequence(t->sequence,sequence);
