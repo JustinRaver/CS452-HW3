@@ -41,7 +41,7 @@ extern void manageJobs(Jobs jobs){
       // get the ith PID
       pid_t pid = (long)deq_head_ith(getPIDS(pipeline),j);
       if(waitpid(pid, NULL, WNOHANG) > 0){
-        printf("[%d] done\n",pid);
+        // printf("[%d] done\n",pid);
         deq_head_rem(getPIDS(pipeline),deq_head_ith(getPIDS(pipeline),j));
       } 
     }
