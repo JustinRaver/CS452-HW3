@@ -1,0 +1,1 @@
+sleep 10 & cd ./Test & pwd & ls & sleep 10 & pwd ; cat ./Test/Test_sequence_background/out > ./Test/Test_sequence_background/exp

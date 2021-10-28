@@ -1,0 +1,1 @@
+pwd | cat > ./Test/Test_pipe/out
