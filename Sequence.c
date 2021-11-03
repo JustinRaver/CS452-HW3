@@ -1,3 +1,7 @@
+/*
+ * Author: Justin Raver
+ * Class: CS452
+ */
 #include <sys/wait.h>
 #include "Sequence.h"
 #include "deq.h"
@@ -15,6 +19,7 @@ extern void freeSequence(Sequence sequence) {
   deq_del(sequence,freePipeline);
 }
 
+// Added job management after sequence exits to reduce job space consumption
 extern void execSequence(Sequence sequence, Jobs jobs, int *eof) {
   while (deq_len(sequence) && !*eof)
     execPipeline(deq_head_get(sequence),jobs,eof);

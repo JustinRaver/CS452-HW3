@@ -1,5 +1,31 @@
 {
     "files.associations": {
-        "wait.h": "c"
-    }
+        "wait.h": "c",
+        "error.h": "c"
+    },
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#02475b",
+        "activityBar.activeBorder": "#000000",
+        "activityBar.background": "#02475b",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#000000",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "statusBar.background": "#012029",
+        "statusBar.border": "#012029",
+        "statusBar.debuggingBackground": "#290a01",
+        "statusBar.debuggingBorder": "#290a01",
+        "statusBar.debuggingForeground": "#e7e7e7",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#02475b",
+        "statusBarItem.remoteBackground": "#012029",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "tab.activeBorder": "#02475b",
+        "titleBar.activeBackground": "#012029",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.border": "#012029",
+        "titleBar.inactiveBackground": "#01202999",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.remoteColor": "#012029"
 }

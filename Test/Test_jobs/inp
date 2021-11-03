@@ -1,1 +1,1 @@
-sleep 10 & pwd | cat
+sleep 5 & pwd | cat

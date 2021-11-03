@@ -43,6 +43,8 @@ int main() {
   } else {
     fclose(rl_outstream);
   }
+  // Free all jobs commands in jobs deq
+  freeJobs(jobs);
   freestateCommand();
   return 0;
 }

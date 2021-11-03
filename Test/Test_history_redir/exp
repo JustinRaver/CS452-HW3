@@ -1,0 +1,1 @@
+1 history < grammar.txt > /home/JUSTINRAVER/CS452/CS452-HW3/Test/Test_history_redir/out ; cat /home/JUSTINRAVER/CS452/CS452-HW3/Test/Test_history_redir/out > /home/JUSTINRAVER/CS452/CS452-HW3/Test/Test_history_redir/exp

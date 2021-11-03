@@ -1,3 +1,7 @@
+/*
+ * Author: Justin Raver
+ * Class: CS452
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

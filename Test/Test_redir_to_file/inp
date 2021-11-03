@@ -1,0 +1,1 @@
+cat grammar.txt > /home/JUSTINRAVER/CS452/CS452-HW3/Test/Test_redir_to_file/out

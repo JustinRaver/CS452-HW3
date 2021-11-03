@@ -1,3 +1,7 @@
+/*
+ * Author: Justin Raver
+ * Class: CS452
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +26,7 @@ static T_words p_words();
 static T_command p_command();
 static T_pipeline p_pipeline();
 static T_sequence p_sequence();
+// Added a new struct to store redirects
 static T_redir p_redir();
 
 
@@ -54,8 +59,9 @@ static T_command p_command() {
   if (!words)
     return 0;
   T_command command=new_command();
+  // Added a redir to the command to follow the grammar
   T_redir redir=p_redir();
-
+  // Set the commands redir to the parsed redir
   command->redir=redir;
   command->words=words;
   return command;
@@ -67,6 +73,7 @@ static T_pipeline p_pipeline() {
     return 0;
   T_pipeline pipeline=new_pipeline();
   pipeline->command=command;
+  // Set this to null so that the value can be checked later
   pipeline->pipeline = NULL;
   if (eat("|"))
     pipeline->pipeline=p_pipeline();
@@ -91,21 +98,34 @@ static T_sequence p_sequence() {
   return sequence;
 }
 
+/*
+ * When called p_redir creates a new redir and then attempts to parse
+ * a redir if the redir is able to eat a "<" or ">" or both it sets the
+ * corresponding words and op so that it can be used to create a command
+ * 
+ * returns a redir where word1 is NULL if no redir is found
+ */
 static T_redir p_redir(){
   T_redir redir=new_redir();
   redir->op1 = NULL;
   redir->word2=NULL;
 
+  // Attempt to parse a redir
   if(eat("<")){
+    // Set op
     redir->op1="<";
+    // Parse the ops filename
     redir->word1=p_word();
     
     if(eat(">")){
+      // Parse the ops filename
       redir->word2=p_word();
     }
   }
   if(eat(">")){
+      // Set op
       redir->op1= ">";
+      // Parse the ops filename
       redir->word1=p_word();
   }
   return redir;
@@ -167,6 +187,7 @@ static void f_sequence(T_sequence t) {
   free(t);
 }
 
+// frees the redir structs data
 static void f_redir(T_redir t){
   if (!t)
     return;

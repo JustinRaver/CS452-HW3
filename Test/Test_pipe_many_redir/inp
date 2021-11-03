@@ -1,0 +1,1 @@
+pwd | cat | cat | cat | cat > /home/JUSTINRAVER/CS452/CS452-HW3/Test/Test_pipe_many_redir/out

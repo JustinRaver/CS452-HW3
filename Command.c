@@ -1,3 +1,8 @@
+/*
+ * Author: Justin Raver
+ * Class: CS452
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,8 +15,11 @@
 #include "Command.h"
 #include "error.h"
 
+// Added input and output to store file descriptors for each command
 typedef struct {
+  // input fd
   int input;
+  // output fd
   int output;
   char *file;
   char **argv;
@@ -32,49 +40,75 @@ static void builtin_args(CommandRep r, int n) {
     ERROR("wrong number of arguments to builtin command"); // warn
 }
 
+/*
+ * Added a wait for all child processes to exit
+ */
 BIDEFN(exit) {
   builtin_args(r,0);
+  // wait for all child processes
   while ((wait(NULL)) > 0);
-  manageJobs(jobs);
-  freeJobs(jobs);
   *eof=1;
 }
 
 BIDEFN(pwd) {
   builtin_args(r,0);
-  if (!cwd)
-    cwd=getcwd(0,0);
+  if (!cwd) cwd = getcwd(0,0);
+  // print the current working directory to the commands fd
   dprintf(r->output, "%s\n",cwd);
 }
 
+/*
+ * Added functionality to call cd - which does nothing if the cd command has not 
+ * been called previously.
+ * 
+ * Added a full path so that cd - has a direct path to go to when called
+ */
 BIDEFN(cd) {
   builtin_args(r,1);
   if (strcmp(r->argv[1],"-")==0) {
+    // if old working directory is set
     if(owd){
+      // set temp working directory to current
       char *twd=cwd;
+      // set current to old
       cwd=owd;
+      // set old to temp
       owd=twd;
     }
   } else {
+    // if old exists free
     if (owd) free(owd);
+    // if cwd not set set it
     if(!cwd) cwd = getcwd(0,0);
+    // set old working directory
     owd=cwd;
+
+    // set current working directory
     cwd=strdup(r->argv[1]);
   }
+  // throw error if failed
   if (cwd && chdir(cwd))
     ERROR("chdir() failed"); // warn
+  // reset cwd to current working directory
   cwd = getcwd(0,0);
 }
 
+/* 
+ * Used the history library and corresponding function history_list() to create
+ * a list of the commands in the .history file and iterate through the commands
+ * to print for the user
+ */
 BIDEFN(history) {
   builtin_args(r,0);
 
   register HIST_ENTRY **hist_list;
-
+  // get list of history commands
   hist_list = history_list();
   
   if(hist_list){
+    // iterate through commands with i as the command number
     for(int i=0; hist_list[i]; i++){
+      // print to the commands output file descriptor
       dprintf(r->output, "%d %s\n", i+history_base, hist_list[i]->line);
     }
   }
@@ -125,6 +159,14 @@ static char **getargs(T_words words) {
   return argv;
 }
 
+/*
+ * 
+ * Added file descriptor handling which either sets default to those passed in
+ * or if a redirect occurs will create new file descriptors and overwrite the 
+ * default
+ * 
+ * Handles errors from opening the file descriptors
+ */
 extern Command newCommand(T_words words, T_redir redir, int input, int output) {
   CommandRep r=(CommandRep)malloc(sizeof(*r));
   if (!r)
@@ -132,22 +174,31 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
 
   r->argv=getargs(words);
   r->file=r->argv[0];
+  // set the input file descriptor to the given (handles default and pipe fd)
   r->input=input;
+  // set the out put to given (handles default and pipe fd)
   r->output=output;
 
+  // check if a redir occured in the command
   if (redir->op1 != NULL){
+    // check redir type
     if (strchr(redir->op1, '<') != NULL){
+      // create input file descriptor
       r->input = open(redir->word1->s, O_RDONLY);
-
+      // check if a second redir occured to output
       if(redir->word2 != NULL){
+        // create output file descriptor
         r->output= open(redir->word2->s, O_RDWR | O_CREAT | O_TRUNC, 0777);
       }
     }else{
+      // create output file descriptor
       r->output= open(redir->word1->s, O_RDWR | O_CREAT | O_TRUNC, 0777);
     }
 
+    // if opening the fds failed return an error
     if(r->output < 0 || r->input < 0){
         ERROR("Failed to open file");
+        // free the failed command 
         freeCommand(r);
         exit(-222);
     }
@@ -155,30 +206,44 @@ extern Command newCommand(T_words words, T_redir redir, int input, int output) {
   return r;
 }
 
+/*
+ * Changes file descriptors in the child for external commands and 
+ * closes the corresponding descriptors in the child process
+ * 
+ * Proceeds to call execvp and throw error if failure has occured
+ */
 static void child(CommandRep r, int fg) {
   int eof=0;
   Jobs jobs=newJobs();
-  // printf("Command %s\n", r->argv[0]);
   if (builtin(r,&eof,jobs))
     return;
- 
+  
+  // if command is external proceed to check file descriptors and change if not default
   if(r->output != STDOUT_FILENO){
-    if(dup2(r->output, STDOUT_FILENO) < 0) perror("Dup2 failed to execute");
-    if(close(r->output) < 0) perror("Failed to close file descriptor");
+    // Change descriptors
+    if(dup2(r->output, STDOUT_FILENO) < 0) ERROR("Dup2 failed to execute");
+    // close descriptors
+    if(close(r->output) < 0) ERROR("Failed to close file descriptor");
   } 
   if(r->input != STDIN_FILENO){
-    if(dup2(r->input, STDIN_FILENO) < 0) perror("Dup2 failed to execute");
-    if(close(r->input)< 0) perror("Failed to close file descriptor"); 
+    // Change descriptors
+    if(dup2(r->input, STDIN_FILENO) < 0) ERROR("Dup2 failed to execute");
+    // close descriptors
+    if(close(r->input)< 0) ERROR("Failed to close file descriptor"); 
   }
 
   
-
-  if(execvp(r->argv[0],r->argv) < 0) perror("Exec failed");
+  //Attempt to exec throw error on failure
+  if(execvp(r->argv[0],r->argv) < 0) ERROR("Exec failed");
 
   ERROR("execvp() failed");
   exit(0);
 }
 
+/*
+ * Added job functionality to track PID's for pipeline commands and
+ * wait functionality to wait for single commands executed in the foreground
+ */
 extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
 			int *jobbed, int *eof, int fg) {
   CommandRep r=command;
@@ -199,25 +264,27 @@ extern void execCommand(Command command, Pipeline pipeline, Jobs jobs,
   }else{
     // close the file descriptors 
     closeFD(r);
-    // get the pid of the child process and add it to the jobs for the pipeline
-    addPipePID(pipeline,pid);
 
     // if the command isnt a foreground command then wait for it to execute
     if(fg == 1){
-      pid_t process = (long)getPipePID(pipeline);
-      waitpid(process, NULL, 0);
+      // wait for the process that was just added
+      waitpid(pid, NULL, 0);
+    }else{
+      // get the pid of the child process and add it to the jobs for the pipeline
+      addPipePID(pipeline,pid);
     }
   }
 }
 
+// Check command and closes open file descriptors if necessary
 extern void closeFD(Command command){
   CommandRep r=command;
 
   if(r->input != STDIN_FILENO){
-    if(close(r->input) < 0) perror("Failed to close pipe");
+    if(close(r->input) < 0) ERROR("Failed to close pipe");
   }
   if(r->output != STDOUT_FILENO){
-    if(close(r->output) < 0) perror("Failed to close pipe");
+    if(close(r->output) < 0) ERROR("Failed to close pipe");
   }
 }
 

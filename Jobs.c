@@ -1,3 +1,7 @@
+/*
+ * Author: Justin Raver
+ * Class: CS452
+ */
 #include "Jobs.h"
 #include "deq.h"
 #include "error.h"
@@ -19,6 +23,10 @@ extern void freeJobs(Jobs jobs) { // never called
   deq_del(jobs,freePipeline);
 }
 
+/*
+ * Added this command to manage the jobs in the jobs Deq, this reduces
+ * the necessary storage capacity because jobs can be freed when completed
+ */
 extern void manageJobs(Jobs jobs){
   if(sizeJobs(jobs) == 0) return;
   /*
@@ -41,7 +49,6 @@ extern void manageJobs(Jobs jobs){
       // get the ith PID
       pid_t pid = (long)deq_head_ith(getPIDS(pipeline),j);
       if(waitpid(pid, NULL, WNOHANG) > 0){
-        // printf("[%d] done\n",pid);
         deq_head_rem(getPIDS(pipeline),deq_head_ith(getPIDS(pipeline),j));
       } 
     }

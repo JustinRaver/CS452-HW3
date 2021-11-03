@@ -8,6 +8,7 @@ typedef struct T_command  *T_command;
 typedef struct T_words    *T_words;
 typedef struct T_word     *T_word;
 
+// Define a new redir type which has space for 2 filenames and an op
 struct T_redir {
   char *op1;			/* < or > */
   T_word word1;
@@ -24,6 +25,7 @@ struct T_pipeline {
   T_pipeline pipeline;
 };
 
+// Added a redir to match the grammar
 struct T_command {
   T_words words;
   T_redir redir;

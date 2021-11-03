@@ -40,3 +40,77 @@ cd ..
 cd -
 pwd
 exit
+ls
+pwd
+cd ..
+cd -
+pwd | cat
+exit
+pwd
+cd ..
+cd -
+ls | cat
+sleep 10 &
+pwd | cat
+ls
+exit
+pwd
+cd -
+cd ..
+cd -
+histopry
+history
+exit
+cd ..
+cd -
+history
+pwd
+exit
+pwd
+cd ..
+cd -
+history
+exit
+pwd
+cd ..
+cd -
+history
+exit
+cd ..
+cd -
+pwd
+history
+exit
+cd ..
+cd -
+pwd
+history
+exit
+cd ..
+cd -
+exit
+pwd
+cd ..
+cd -
+history
+ls
+exit
+pwd
+cd ..
+cd -
+exit
+pwd
+cd ..
+cd -
+history
+exit
+pwd
+cd ..
+cd -
+history
+exit
+ls
+pwd
+cd ..
+cd -
+exit
