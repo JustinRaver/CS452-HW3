@@ -114,3 +114,19 @@ pwd
 cd ..
 cd -
 exit
+pwd
+cd ..
+cd -
+cat grammar.txt | cat | cat | cat | cat
+pwd | cat
+ls
+echo "hi"
+exit
+pwd
+cd ..
+cd -
+ls
+pwd | cat | cat | cat
+history
+echo "hi"
+exit

@@ -90,6 +90,7 @@ BIDEFN(cd) {
   if (cwd && chdir(cwd))
     ERROR("chdir() failed"); // warn
   // reset cwd to current working directory
+  if(cwd) free(cwd);
   cwd = getcwd(0,0);
 }
 

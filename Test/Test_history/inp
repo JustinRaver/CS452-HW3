@@ -1,1 +1,1 @@
-history > ./Test/Test_history/out ; cat ./Test/Test_history/out > ./Test/Test_history/exp
+history
