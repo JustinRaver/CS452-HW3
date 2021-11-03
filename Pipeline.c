@@ -97,7 +97,7 @@ extern void execPipeline(Pipeline pipeline, Jobs jobs, int *eof) {
   execute(pipeline,jobs,&jobbed,eof);
 
   if (!jobbed || (sizePipePIDS(pipeline) == 0)){ // frees the pipeline if all processes have exited
-    // remove and free job from jobs FIXME: Is this necessary?
+    // remove and free job from jobs
     deq_head_rem(jobs,pipeline);
     freePipeline(pipeline);	// for fg builtins, and such
   }
